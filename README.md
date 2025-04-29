@@ -109,3 +109,70 @@ npm run both
 ## Contributing
 
 We welcome contributions to MedicareProject! If you'd like to contribute
+
+
+
+
+
+Here's a Dockerfile for your React client application based on the project structure you've shared:
+
+dockerfile
+# Stage 1: Build the React application
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copy package.json and package-lock.json first to leverage Docker cache
+COPY client/package.json client/package-lock.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the application files
+COPY client/ ./
+
+# Build the application
+RUN npm run build
+
+# Stage 2: Serve the application using Nginx
+FROM nginx:alpine
+
+# Copy the built app from the builder stage to Nginx
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# Copy custom nginx configuration if you have one
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
+Notes:
+This is a multi-stage Dockerfile that:
+
+First builds your React application using Node.js
+
+Then serves the built static files using Nginx
+
+The Dockerfile assumes:
+
+Your React app has a standard build script in package.json (npm run build)
+
+You want to serve the production build on port 80
+
+If you need to make adjustments:
+
+If you're using a different Node version, change the node:18-alpine to your preferred version
+
+If you have a custom Nginx configuration, uncomment and modify the relevant line
+
+If your React app needs environment variables during build, you'll need to add them with ARG or ENV directives
+
+To use this Dockerfile:
+
+Place it in your project root (same level as the client directory)
+
+Build with: docker build -t medicare-client .
+
+Run with: docker run -p 3000:80 medicare-client
